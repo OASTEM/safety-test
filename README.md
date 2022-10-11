@@ -7,6 +7,8 @@ THIS VERSION OF THE SAFETY TEST IS READY FOR USE.
 
 ---RELEASE 6.0--- 
 
+
+Link to website hosting beta safety test: https://oasafety.personalweb.systems/
 (Personal Repository Version with all the latest updates at: https://github.com/nerdyprojectslol/safetytest)
 
 
