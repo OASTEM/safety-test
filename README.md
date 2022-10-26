@@ -7,9 +7,6 @@ THIS VERSION OF THE SAFETY TEST IS READY FOR USE.
 
 ---RELEASE 6.1--- 
 
-(Personal Repository Version with all the latest updates at: https://github.com/nerdyprojectslol/safetytest)
-
-
 General Rule of Thumb for Making Questions or adding responses to Questions:
 There should be at least 4-5 extra questions more than the provided amount of questions (If 16 was the max, 20-21 questions would suffice)
 For every question, there should at least be 5-6 answers.
