@@ -1,6 +1,5 @@
 //Packages
 const express = require('express');
-const path = require('path');
 
 //Accessing the library/module for usage
 const app = express();
@@ -12,7 +11,6 @@ const port = process.env.PORT || 3000;
 //File System
 const fs = require("fs");
 
-
 //Port hosted on, as well as logging the status of the server, if it is running or not
 app.listen(port, () => console.log('Server started on port ' + port));
 console.log("Listening..")
@@ -22,8 +20,8 @@ app.use(express.static('public'));
 //Limiting the size of json data (1mb) and parsing JSON data
 app.use(express.json({ limit: '5mb' }));
 
-
 let settingsOut;
+let folderSplit = "\n";
 
 //Get settings or any other needed file and export to the client
 app.post("/settings", async (request, response) => {
@@ -37,7 +35,7 @@ app.post("/settings", async (request, response) => {
 
         let settingsMain = [];
         //Gets settings from the url
-        fs.readFile("public" + url + "/ItemsFolder/settings.yml", "utf8", async function (err, data) {
+        fs.readFile("public" + url + "/settings.yml", "utf8", async function (err, data) {
             //console.log("Reading settings");
             try {
                 settings = data
@@ -49,9 +47,9 @@ app.post("/settings", async (request, response) => {
                 let tempCount = 0;
 
                 //Replace all \r\n statements with \n because \r\n is only supported in local run time
-                while (tempSettings.split("\r\n")[tempCount] != null) {
+                while (tempSettings.split(folderSplit)[tempCount] != null) {
                     //Encountered an error, pls fix tomorrow tyy
-                    settingsMain.push(tempSettings.split("\r\n")[tempCount].split(": ")[1]);
+                    settingsMain.push(tempSettings.split(folderSplit)[tempCount].split(": ")[1]);
                     tempCount++;
                 }
                 settingsOut = settingsMain;
@@ -82,9 +80,53 @@ app.get("/folderdata", async (request, response) => {
                     //If the file is a folder
                     if (fs.lstatSync(folderPath + "/" + file).isDirectory()) {
                         //Add the folder to the array
-                        folderData.push(file);
+                        let filePath = folderPath + "/" + file;
+                        fs.readdirSync(folderPath + "/" + file).forEach(file2 => {
+                            //console.log(file2);
+                            let settings;
+
+                            let setinclude = false;
+                            let txtinclude = false;
+                            let htmlinclude = false;
+
+                            let typeoftxt = "";
+
+                            if (fs.existsSync(filePath + "/settings.yml")) {
+                                //console.log(settings.split(folderSplit)[6].split(": ")[1]);
+                                typeoftxt = fs.readFileSync(folderPath + "/" + file + "/" + file2, "utf8").split(folderSplit)[6].split(": ")[1];
+                                setinclude = true;
+                            }
+
+                            if (fs.existsSync(filePath + "/" + typeoftxt)) {
+                                txtinclude = true;
+                            }
+
+                            if (fs.existsSync(filePath + "/index.html")) {
+                                htmlinclude = true;
+                            }
+
+                            if (setinclude == true && txtinclude == true && htmlinclude == true) {
+                                //console.log(setinclude, txtinclude, htmlinclude);
+                                if (!file.includes("#", 0)) {
+                                    folderData.push(file);
+                                    if (folderData.includes("Safety-Test")) {
+                                        folderData.splice(folderData.indexOf("Safety-Test"), 1);
+                                    }
+                                } else if (file.includes("#", 0)) {
+                                    console.log("Folder " + file + " is a hidden folder and will not be shown");
+                                }
+                            } else if (setinclude == false || txtinclude == false || htmlinclude == false) {
+                                if (typeoftxt == undefined) {
+                                    //console.log("Error, returning");
+                                } else {
+                                    //console.log(setinclude, txtinclude, htmlinclude);
+                                    console.log("Folder " + file + " is missing a file and will not be shown. It is missing file(s): " + (setinclude == false ? "settings.yml, " : "") + (txtinclude == false ? "Missing Answers File" + ", " : "") + (htmlinclude == false ? "index.html, " : ""));
+                                }
+                            }
+                        });
                     }
                 });
+
                 if (folderData.includes("Safety-Test")) {
                     folderData.splice(folderData.indexOf("Safety-Test"), 1);
                 }
@@ -113,7 +155,7 @@ app.post("/questions", async (request, response) => {
         let datajson = {};
         datajson.PossibleQuestions = [];
 
-        fs.readFile("public" + url + "/ItemsFolder/" + settingsOut[6], "utf8", async function (err, data2) {
+        fs.readFile("public" + url + "/" + settingsOut[6], "utf8", async function (err, data2) {
 
             questions = data2;
             //console.log(questions)
@@ -125,7 +167,7 @@ app.post("/questions", async (request, response) => {
             for (let i = 0; i < tempQuestions.split("Question ").length - 1; i++) {
                 let data1 = {
                     "id": "Q" + (i + 1),
-                    "Question": tempQuestions.split("Question ")[i + 1].split("\r\n")[0].split(": ")[1],
+                    "Question": tempQuestions.split("Question ")[i + 1].split(folderSplit)[0].split(": ")[1],
                     "Answers": []
                 }
                 //console.log(datajson.PossibleQuestions);
@@ -134,12 +176,12 @@ app.post("/questions", async (request, response) => {
                 datajson.PossibleQuestions.push(data1);
 
 
-                let Answers = tempQuestions.split("Question ")[i + 1].split(": ")[1].split("\r\n");
+                let Answers = tempQuestions.split("Question ")[i + 1].split(": ")[1].split(folderSplit);
                 Answers.shift();
                 //console.log(Answers);
                 let AnswersData = [];
 
-                
+
                 let removeAmount = 0;
                 if (Answers[Answers.length - 1] == "") {
                     Answers.pop();
@@ -217,7 +259,7 @@ app.get("/api", async (request, res1) => {
             spreadsheetId: id,
             range: "Sheet1!A1:F1",
         });
-        res1.send({ success: true });
+        res1.send({ status: "ok" });
         //If there is an error, it will be logged in the console
     } catch (error) {
         console.log(error);
@@ -231,7 +273,12 @@ app.post("/api", async (request, response1) => {
     try {
         //destructure 'newName' and 'newValue' from request.body
         const { Name, Team, Category, Pass, Score, Type } = request.body;
-        let Time = (new Date().getUTCMonth() + 1) + "/" + (new Date().getUTCDate() - 1) + "/" + new Date().getUTCFullYear() + " --- Time: " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds();
+
+        let UnStrTime = new Date();
+        let Time = UnStrTime.toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles"
+        })
+
         const { googleAPI } = await authentication();
         //add the new name and value to the sheet
         const response = await googleAPI.spreadsheets.values.append({
@@ -246,11 +293,14 @@ app.post("/api", async (request, response1) => {
         });
 
         //Checks the current status of the server and sends a success/fail response
+        response1.send({ status: response.status });
+        /*
         if (response1.status === 200) {
-            response1.send({ success: true });
+            
         } else {
             return response1.status(500).send("Error writing to sheet");
-        }
+        }*/
+
     } catch (error) {
         console.log(error, "There was an error updating the spreadsheet", error.message);
         response1.status(500).send();

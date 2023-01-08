@@ -1,0 +1,16 @@
+Question 1: What language is this coded in?
+ + In JavaScript
+ - In Java
+ - In C++
+ - In C#
+ + In NodeJS
+ - In Python
+
+Question 2: Where is Los Angeles?
+ + California
+ - China
+ - Near London
+ + In the United States
+ - What's Los Angeles?
+ - Mexico
+ - Who knows?
